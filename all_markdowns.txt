@@ -1,0 +1,379 @@
+
+========== MARKDOWN FOR lego-piece-classification/lego-piece-classification.ipynb ==========
+<center>
+<img src="isel.png"
+
+<h3>Licenciatura em Engenharia Informática e Multimédia</h3><br>
+<br>
+<h2>Processamento de Imagem e Visão</h3>
+<h3>1º Trabalho Laboratorial – Contagem e Classificação de Peças de Lego Retangulares </h3>
+<br>
+
+<br>
+Trabalho Realizado por:<br>
+
+Martim Ramos - A51736<br>
+Guilherme Graça - A51827<br>
+Turma 51D<br><br>
+Docente: Pedro Mendes Jorge <br>
+<br>
+26 de Outubro 2025
+</center>
+<center><h2>Índice</h2></center>
+
+1. Introdução
+2. Binarização e Pré-processamento das Imagens
+
+    2.1 Histogramas das imagens
+    
+    2.2 Máscaras aplicadas às imagens originais
+3. Melhoramento das imagens binarizadas
+4. Extração de Componentes Conexos e Propriedades
+5. Classificação das Peças
+6. Conclusão
+7. Bibliografia
+<center><h2>Introdução</h2></center>
+
+No âmbito do Trabalho Laboratorial 1 da unidade curricular, pretende-se desenvolver uma aplicação em Python capaz de realizar a contagem e classificação de peças de LEGO retangulares presentes numa imagem.
+As peças encontram-se dispostas sobre uma mesa de superfície homogénea e clara, sendo captadas por uma câmara posicionada perpendicularmente ao plano de observação, de modo a minimizar distorções e facilitar o processamento da imagem.
+
+O principal objetivo deste trabalho é promover a familiarização com as funções da biblioteca OpenCV, explorando as suas potencialidades na programação de aplicações de visão por computador em tempo real. Pretende-se, assim, aplicar técnicas fundamentais de processamento e análise de imagem, desde a leitura e pré-processamento até à segmentação e extração de propriedades geométricas dos objetos.
+
+As peças de LEGO a considerar apresentam dimensões padronizadas, podendo pertencer a um dos seguintes tipos: 2x2, 2x4, 2x6 ou 2x8. Para o desenvolvimento e teste do algoritmo foram disponibilizadas imagens de treino pelo docente, permitindo ajustar os parâmetros e validar a fiabilidade da classificação.
+
+
+De forma geral, o trabalho foi estruturado nas seguintes etapas principais:
+
+1. Leitura das imagens fornecidas e preparação dos dados
+2. Pré-processamento das imagens
+3. Binarização das imagens
+4. Melhoramento das imagens binarizadas
+5. Extração de componentes conexos e propriedades
+6. Classificação das peças
+# Imports
+<center><h2><b>Leitura das Imagens</b></h2></center>
+
+Como ponto de partida no trabalho, para realizar a tarefa de leitura de imagens, utilizamos as bibliotecas do OpenCV para manipular as imagens e Matplotlib para a sua exibição.
+
+Para armazenar os caminhos das imagens decidimos utilizar um array de strings, pois esta é uma estrutura de dados simples e direta para armazenar uma coleção de ficheiros. Desta forma é facil fazer iterações pelos ficheiros e é facil de alterar diretamente os caminhos da imagens. É importante notar que o folder "ImagensTreino" consta na raiz do projeto.
+
+Tanto aqui na fase de leitura como nas seguintes tarefas, decidimos utilizar uma estrutura de grelha, com quatros colunas, para exibir todas as imagens em subplot, desta forma fica fácil de observar todas as imagens de uma vez só. Aqui fizemos o plot das imagens originais ainda sem qualquer alteração, assim ao longo do projeto poderemos voltar para ver e comparar as alterações feitas com as imagens originais.
+<center><h2><b>Binarização e Pré-processamento das Imagens</b></h2></center>
+Para ter uma binarização perfeita alinhada com os objetivos do trabalho é entendido que se deve ter todos os pixeis das peças com um valor (por exemplo 255) e todo o fundo com outro valor (por exemplo 0). Visualmente as peças iriam aparecer a branco e o fundo iria aparece a preto. Ao ter esta separação clara entre o fundo e os objetos é um passo essencial para o bom funcionamento do algoritmo de extração de componentes conexos.
+
+No inicio da fase de binarização decidimos tentar binarizar todas as imagens diretamente. Ainda sabendo que provavelmente não seria suficiente, fizemos esta binarização simples com o objetivo de obter ter informação visual que nos pudesse dar alguma dica sobre os desafios que temos de superar, como sombras, reflexos, peças de cores parecidas ao fundo...) e assim nos conseguirmos guiar nos passos seguintes.
+
+Como estratégia inicial utilizamos o *Método de Otsu* pois foi este o método abordado nas aulas teóricas da cadeira de Processamento de Imagem e Visão, é também um método com grande capacidade de adaptação e resistente no que toca a variações de iluminação de imagem para imagem. Esta técnica faz determinação do melhor limiar/threshold a usar na binazação de forma automática tendo em conta o histograma da imagem, pois assume um pico do histograma como o fundo e outro pico como os objetos. Tendo em conta estas caracteristicas do método de otsu, podemos concluir que é um método bem superior a simplesmente escolher o valor intermédio e fixo entre 0 e 255 sendo esta a abordagem que estávamos habituados a utilizar.
+
+Para implementar esta binarização inicial, começamos por ler cada imagem individualmente em um ciclo. 
+De seguida convertemos as imagens para escala de cinzentos pois este é um passo obrigatório na binarização, cada imagem tem 3 canais de cor e para aplicar o método de otsu é necessário ter apanes um unico canal de cor em que cada pixel tem apenas o valor de intensidade (0 a 255), assim cada pixel fica apenas com a sua informação de luminancia e já é possivel calcular o limiar de otsu. Também é possivel simplesmente utilizar um dos canais de cor RGB, no entando inicialmente decidimos usar o GrayScale pois é a forma mais intuitiva e que estamos mais habituados a utilizar para reduzir de 3 para 1 canal de cor as imagens.
+Após aplicar o GrayScale nas Imagens fizemos a Binarização das mesmas com o método de otsu e visualizamos os resultados.
+Como podemos observar, as binarizações nao estão muito explicitas,já como esperado, pois em maior parte das imagens existe algumas peças que são confundidas com o fundo e outras que nem sequer foram detetadas no processo de binarização. Para isto teremos de aplicar algum tipo um pré-processamento nas imagens de modo a que todas as peças sejam distinguidas do fundo corretamente.
+# Histogramas das imagens
+Um histograma é uma representação estatística das intensidades de pixéis. Para imagens a tons de cinzento, mostra quantos pixéis há em cada nível de intensidade (0–255) e para imagens a cores, normalmente calculamos um histograma por canal (B, G, R). Visualmente é um gráfico onde o eixo horizontal são os níveis de intensidade e o eixo vertical a frequência (nº de pixéis) desses níveis.
+
+É uma ótima ferramenta para realizar uma análise rápida das características de uma imagem mas apresenta algumas limitações como é o caso de ser pouco eficaz para cenas mais complexas mas para o nosso estudo em questão é uma ferramenta bastante útil.
+Como estamos a trabalhar as imagens em formato RGB, decidmos que seria uma boa opção avaliar os histogramas de cada canal de cor de todas as imagens de treino para ver qual canal apresenta melhor contraste entre as peças e o fundo. De seguida realizamos esta operação.
+Através da observação dos histogramas dos três canais de cor (azul, verde e vermelho) e das respetivas imagens individuais, é possível verificar que o canal vermelho (R) apresenta o maior contraste entre as peças e o fundo. Nos canais azul e verde, as intensidades dos pixels encontram-se mais próximas entre si, o que dificulta a distinção entre os objetos e a superfície de apoio.
+
+Este comportamento deve-se principalmente às características da iluminação e da cor do plano de fundo presente nas imagens fornecidas. Como a mesa possui uma tonalidade azulada, o canal azul (B) e o verde (G) tendem a registar valores elevados também no fundo, reduzindo o contraste. Já o canal vermelho (R), por apresentar menor resposta luminosa no fundo e maior nas peças coloridas, realça melhor os contornos e as diferenças de intensidade.~
+
+Por essa razão, o canal vermelho foi considerado o mais adequado para segmentar as peças de LEGO e proceder à binarização na fase seguinte do processamento.
+Na seguinte tentativa de binarização, recorremos novamente ao método de Otsu, mas desta vez aplicando-o exclusivamente ao canal vermelho (R) das imagens. Antes de aplicarmos a binarização, aplicámos um filtro guassiano para suavizar as imagens. Este filtro tem como função reduzir o ruído presente nas imagens, o que pode facilita imenso na tarefa de binarização.
+Podemos observar que as imagens binarizadas jão estão melhores que as imagens da primeiro tentativa de binarização mas ainda assim reparámos que, em específico, nas imagens "lego21.jpg" e "lego30.jpg" existe uma peça em ambas que não está a ser binarizada corretamente. Isto signfica que o nosso processo de pré-processamento não pode ficar por aqui, teremos que arranjar uma forma de estas peças ficarem totalmente visiveis após o processo de binarazação.
+Após pensarmos no assunto decidimos que a melhor opção seria mesmo "manusear" a cor destas peças, pois percebemos rapidamente que, nas imagens originais estas peças eram esverdeadas o que fica suscetível a erros inesperados na binarização pois a cor destas peças assemelha-se muito à cor do fundo. Ou seja, o que o que acontece na binarização é que todas os pixeis que estão abaixo do limiar de otsu são convertidos para 0 (preto) e todos os pixeis acima do limiar são convertidos para 255 (branco). Como as peças esverdeadas têm uma cor muito parecida com o fundo, muitos dos pixeis destas peças acabam por ficar abaixo do limiar e são convertidos para preto, fazendo com que estas peças não sejam detetadas corretamente.
+# Máscara aplicada às imagens originais
+Decidimos criar umas máscara que respeite um determinado limiar de cores, ou seja, vamos definir um intervalo de cores que consideramos ser o intervalo de cores das peças esverdeadas e vamos alterar a cor dessas peças para uma cor que se destaque mais do fundo, neste caso decidimos alterar a cor dessas peças para vermelho. A escolha do vermelho deve-se ao facto de termos percebido atráves da tentiva de binarização que as peças no canal vermelho são as que apresentam melhor contraste com o fundo. Faz-nos sentido converter para esta cor porrque possui na componente (red) um valor alto (255) e nas outras componentes (green e blue) valores baixos (0), o que faz com que estas peças (a vermelho) se destaquem bastante do fundo azul claro.
+O intervalo de cores para as peças esverdeadas foi obtido com recurso a uma ferramenta de identificação de cores. Esta ferramenta está disponível na web através do link: https://imagecolorpicker.com/ . Com esta ferramenta conseguimos achar uma base sólida em valores de RGB para definir o intervalo de cores que queremos alterar, depois fomos refinando os valores até obter o resultado desejado.
+
+Em anexo fica uma imagem que demonstra o uso que realizamos nesta ferramenta.
+
+<img src="imagem_processo_extracao_cor_pixeis.jpg" width="500">
+Depois de termos finalemente um conjunto de imagens que achamos prontas a serem binarizadas corretamente, decidimos avançar para a fase de binarização final. Nesta fase decidimos manter a estratégia que já tínhamos utilizado anteriormente, ou seja, vamos continuar a utilizar o canal vermelho (R) para realizar a binarização, pois como já foi referido anteriormente este canal apresenta o melhor contraste entre as peças e o fundo.
+Podemos observar que após este processo de alteração de cor das peças esverdeadas para vermelhas, a binarização já está quase perfeita em todas as imagens de treino. De seguida podemos avançar para o processo de melhoramento das imagens obtidas, de modo a que as peças fiquem bem definidas e realçadas para o processo de extração de componentes conexos e devidas propriedades. Para isso iremos usar operadores morfológicos de modo a preencher pequenos buracos que possam existir. Teremos também de ter em conta a separação de peças que possam estar ligadas (usar a função de erode e posteriormente o dilate).
+<center><h2><b>Melhoramento das Imagens Binarizadas</b></h2></center>
+De seguida vamos recorrer aos métodos getStructuringElement, morphologyEx, erode e dilate da biblioteca OpenCV para realizar um melhoramento das imagens binarizadas.
+
+Como primeiro passo, definimos três elementos estruturantes (kernels) que serão utilizados nas operações morfológicas. Optamos por um kernel elítico de tamanho 7x7, que é eficaz para eliminar pequenos ruídos e preencher buracos nas peças (pois algumas peças apresentavam ainda o formato das suas cabeças arredondadas daí termos escolhido um kernel elítico mas que na verdade é circular pois usamos os mesmo valores em ambos os parâmetros do kernel), por um kernel retangular grande e outro mais pequeno. O grande tem como objetivo erodir fortemente nos cantos, pois maior parte das peças estavam juntas pelos cantos daí a nossa ideia de usar um kernel de forma retangular. O mais pequeno foi usado na dilatação das peças pois após a erosão das mesmas, estas perdem o formato original então o dilate ajuda a recuperar esse formato perdido.
+Após a aplicação dos operadores morfológicos, podemos observar que as peças estão bem definidas e separadas bem como áreas que antes tinham alguns buracos abertos já se apresentam todos fechados, o que nos permite avançar para o processo de extração de componentes conexos e devidas propriedades das peças de LEGO.
+<center><h2><b>Extração de Componentes Conexos e Propriedades</h2></b></center>
+
+Após a binarização e melhoramento das imagens, nesta fase temos várias imagens melhoradas que contêm as peças totalmente a branco e desconectadas umas das outras. Como objetivo desta fase, cabe a nós encontrar uma forma de identificar e isolar cada peça individual/componente conexo e analisar as suas características de modo a posteriormente conseguir fazer a identificação das peças.
+O desenvolvimento desta fase foi um processo iterativo em que a nossa estratégia foi ajustada e evoluiu à medida que iam surgindo desafios e limitações nas abordagens anteriores.
+
+Inicialmente a nossa abordagem seria relativamente simples. Nós pretendíamos:
+ - Encontrar todos os contornos com *cv2.findContours*
+ - Para cada contorno verificar se é um rectangulo através da função desenvolvida *isRectangle*
+ - Se o contorno for um rectangulo então extraiamos a sua area com o *cv2.contourArea*
+A nossa hipótese era que depois de extrair as áreas, iríamos definir ranges de área para cada tipo peça de peça e posteriormente usar essas áreas  para a classificação. Utilizamos o *cv2.putText* para imprimir esses valores de cada peça para conseguirmos recolher esses dados para depois definir essas gamas/ranges de valores.
+
+Após analisar os resultados da nossa primeira abordagem visualmente, deparamos-nos com o primeiro problema:
+As peças que estavam incompletas por terem sido recordadas da imagem poderiam ser classificadas como retângulos e isso iria gerar uma área e classificação incorreta. Em específico, na imagem 14 existe uma peça 2x4 que está cortada mesmo a meio, logo a sua área é metade e iria depois ser classificada como uma peça 2x2 quando ela deveria simplesmente ser identificada.
+Para solucionar este problema implementamos a verificação "toca_borda" no inicio do ciclo de análise de cada contorno, esta verificação usa *cv2.boundingRect* para obter a caixa que envolve cada componente conexo e se essa caixa tocar em qualquer uma das bordas da imagem então o ciclo passa diretamente para o proximo componente.
+
+Após filtrar as peças cortadas, surgiu um segundo problema, existe alguma ambiguidade em usar apenas a área para verificar o tipo das peças pois pode haver falsos positivos, verificamos que algumas peças tinham contornos retangulares mas que não são peças elegíveis para o nosso trabalho. Assim sendo, decidimos que para além da área, também iríamos extrair altura de cada contorno de modo a podermos fazer uma filtragem mais eficaz das peças que realmente nos interessam. Não utilizamos a largura pois estamos a tratar de peças 2xN portanto a largura dos contornos será praticamente a mesma.
+Para fazer a análise das propriedades dos componentes conexos, definimos parâmetros globais
+que controlam o quão restrito é a definição do componente ser um retângulo ou não:
+- *EPSILON_FACTOR* - Este fator é utilizado quando se faz a aproximação polignal dos contornos (*cv2.aproxPolyDP*). Para este fator utilizamos um valor de 0.02, ou seja 2% do perimetro, escolhemos este valor por ter um bom equilíbrio na medida que suaviza as irregularidas nas bordas das peças mas não distorce a sua forma retangular geral. Notamos que ao aumentar para mais este valor iria simplificar demais a forma dos contornos, logo peças que são mais diferentes de retângulos passam a ser consideradas como retângulos.
+- *TOLERANCIA_ANGULO* - Esta variável define a tolerância em graus para que um ângulo interno do retângulo seja considerado como um angulo reto. Escolhemos 15 graus para dar alguma flexibilidade, assim os angulos não necessitam ter exatamente 90 graus, basta andarem perto desse valor.
+
+O Processo de análise foi dividido num ciclo principal que usa o *cv2.findContours()* para rastrear a borda/contorno de cada compotente conexo da imagem e cada um destes contornos é analisado ao chamar a função auxiliar:
+
+- *isRectangle(contorno)*  - esta função é a principal que recebe um contorno e retorna um boleano que indica se ele é um retângulo e indica tambem a sua área e altura.
+  - Para determinar se é um retângulo é usado o *cv2.approxPolyDP* pois depois da binarizar a imagem o seu contorno nunca é perfeito, há sempre algumas irregularidades, ao usar esta função podemos simplificar para uma forma polignal mais simples e extrair o numero de vertices. Depois os vertices são ordenados para saber quais são vizinhos uns dos outros através do seu ângulo relativamente ao centro, fazemos isto para descobrir os ângulos internos dos retângulos ao utilizar outra função auxiliar *calcularAngulo(p0,p1,p2)* que implementa a fórmula matemática do ângulo entre dois vetores. Depois de sabermos os ângulos internos basta verificar se estes ângulos são próximos que chegue de 90 graus e se forem então são retângulos.
+  - Para calcular a área é usado o *cv2.contourArea(contorno)* que devolve diretamente a área do componente conexo.
+  - Para extrair a altura utilizamos primeiro o método *cv2.minAreaRect(contorno)* para extrair as dimensões, usamos este em oposição ao *cv2.boundingRect* pois os retângulos podem estar rodados. o minAreaRect devolve o retângulo de área mínima que envolve o contorno, depois extraimos o tuplo que contém as dimensões (altura e largura) do retângulo e verificamos qual delas é maior pois sabemos que todas as peças são 2xN e que a menor peça é 2x2, logo a altura é sempre o maior valor destas dimensões (para as peças 2x2 a altura é igual).
+
+Para visualizar e armazenar os resultados, usamos o *cv2.drawContours* que desenha as bordas dos componentes conexos. Usamos *cv2.moments* para calcular o centro dos retângulos, este é o metodo mais acertado para descubrir o centro porque por exemplo se usarmos o boundingRect com os parametros x + width/2, y + height/2 iriamos ter o centro da caixa que envolve o retângulos, não iria funcionar muito bem para os retângulos que estão rodados, já o moments descobre o centro de massa da peça. Usamos esse centro para colocar o texto com a area e a altura do retângulo com o *cv2.putText*. 
+
+Por fim conseguimos visualizar o resultado da extração dos componentes e das propriedades ao ver na imagens da grelha contornado a preto os componentes conexos classificados como retângulos e contornado a verde os componentes que não passaram nessa na verificação.
+Após realizada a extração de componentes conexos e respetivas propriedades, ainda temos algumas peças que têm uma superfície redonda que não deve ser considerada uma peça válida mas a seguir quando realizarmos o classificador vamos fazer com que ela deixe de ser considerada uma peça válida, atráves dos ranges utilizados das alturas e áreas.
+
+De seguida podemos avançar para o processo de classificação das peças.
+<center><h2><b>Classificação das Peças</h2></b></center>
+Antes de passarmos à implementação do classificador, precisamos de guardar as áreas e alturas de todos os tipos de peças que temos no conjunto das imagens de treino. Para isso vamos armazenar manualmente as alturas e as áreas em arrays para cada tipo de dimensão de peça. Os valores extraídos para os devidos arrays foram obtidos com base no output acima dos componentes conexos e propriedades.
+
+Para depois podermos realizar o classificador, precisamos de armazenar os valores máximos e mínimos de cada array de alturas e áreas. Serão estes valores que irão definir os ranges que iremos utilizar no classificador para cada tipo de peça. 
+Com os valores máximos e mínimos definidos, podemos avançar para a implementação do classificador. A lógica do classificador é simples: para cada peça detetada válida, verificamos se a sua altura e área estão dentro dos ranges definidos para cada tipo de peça (2x2, 2x4, 2x6, 2x8). Se ambos os valores estiverem dentro do range correspondente, classificamos a peça como sendo desse tipo. Caso não seja identificada uma peça válida, etiquetamos essa peça como "Indefinida". 
+
+Na fase de rotulação das peças, optamos por calcular novamente o centroide de cada peça para posicionar a etiqueta de classificação. Esta abordagem permite que a etiqueta seja colocada de forma mais centralizada e visível, especialmente em peças que podem ter formatos irregulares ou estarem inclinadas. 
+Colocamos também um rótulo de informação no canto superior esquerdo da imagem final, indicando o número total de cada tipo de peças detetadas.
+Podemos observar que o processo de classificação foi bem sucedido, com todas as peças a serem corretamente identificadas e rotuladas de acordo com as suas dimensões. 
+<center><h2><b>Conclusão</b></h2></center>
+
+Após toda a implementação do trabalho, sentimos que a fase com maiores dificuldades apresentadas foi no pré‑processamento das imagens, ao garantir que todas as peças ficassem corretamente segmentadas na binarização. Revelou‑se desafiante devido à semelhança de cor de algumas peças com o fundo. A estratégia que adotámos, a recoloração das peças esverdeadas através de uma máscara, permitiu estabilizar a segmentação. Também no melhoramento morfológico houve qalgumas dificuldades na escolha dos parâmetros dos kernels (forma e tamanho). O equilíbrio entre separar peças coladas (erosão mais forte) e preservar o seu contorno (dilatação adequada) exigiu afinação até obter imagens limpas e consistentes.
+
+Em suma, a abordagem é simples e eficaz no conjunto de treino fornecido pelo docente, demonstrando assim a utilidade da biblioteca OpenCV para problemas de contagem e classificação.
+<center><h2><b>Bibliografia</b></h2></center>
+Jorge, Pedro, Documentação da unidade curricular 2025-2026, Lisboa: ISEL, 2025
+
+https://docs.opencv.org/4.x/ - Documentação oficial da biblioteca OpenCV
+
+
+
+========== MARKDOWN FOR traffic-vehicle-counting/traffic-vehicle-counting.ipynb ==========
+<center>
+<img src="isel.png"
+
+<h3>Licenciatura em Engenharia Informática e Multimédia</h3><br>
+<br>
+<h2>Processamento de Imagem e Visão</h3>
+<h3>2º Trabalho Laboratorial – Contagem de Veículos em Imagens de Vídeo </h3>
+<br>
+
+<br>
+Trabalho Realizado por:<br>
+
+Martim Ramos - A51736<br>
+Guilherme Graça - A51827<br>
+Turma 51D<br><br>
+Docente: Pedro Mendes Jorge <br>
+<br>
+7 de Dezembro 2025
+</center>
+<center><h3> ENUNCIADO A </h3></center>
+<center><h2>Índice</h2></center>
+
+1. Introdução
+2. Estimação de Imagem de Fundo
+3. Deteção de Pixeis Ativos
+4. Operações Morfológicas
+5. Deteção de Regiões Ativas
+6. Correspondência de regiões entre Imagens Consecutivas
+7. Contextualização do Objetivo Opcional
+8. Calibração e Parâmetros Reais
+9. Transformação de Perspetiva (Homografia)
+10. Configuração das Vias e FPS
+11. Algoritmo de Cálculo de Velocidades
+12. Conclusão
+13. Bibliografia
+
+<center><h2><b>Introdução</b></h2></center>
+
+Este trabalho tem como obetivo desenvolver um sistema de visão por computador que seja capaz de detetar e contar veiculos em um video de uma autoestrada.
+
+A abordagem que implementamos segue um pipeline basico de processamento de video, ele segue os seguintes passos:
+ - **Estimação do Fundo** : Criamos uma imagem de estática referencia (neste caso a estrada) para  depois isolarmos os veiculos.
+ - **Deteção de Pixeis Ativos** : Utilizamos tecnicas de diferença de imagem e de threshhold para segmentar os veiculos do fundo.
+ - **Utilização de operadores morfológicos** : Aplicação de operadores para reduzirmos o ruido e consolidar as formas dos componentes conexos.
+ - **Definição de Região de Interesse** : Restringimos a área que estamos a analizar de modo a reduzir os falsos positivos.
+ - **Extração de Componentes Conexos** : Identificamos os veiculos/regiões ativas e calculamos as sua propriedades geométricas como as bounding boxes e centroides.
+ - **Tracking** : Associamos temporalmente os frames consecutivos de modo a termos uma contagem consistente
+# IMPORTS
+# FUNÇÕES UTILITÁRIAS
+De modo a modularizar o código, criámos duas funções auxiliares que nos ajudam a organizar o código em toda a sua extensão. A primeira função, 'reproduzir_frames', é responsável por reproduzir os vídeos teste com  todas as nuances que estes precisam (região de interesse, contornos dos veículos e a indexação de cada um deles). A segunda função, 'video_para_frames', centraliza o processo de conversão do vídeo em frames, ou seja, recebe um caminho de um vídeo e converte este para uma lista de frames. Esta função é util para depois usar na função anterirmente mencionada a lista de frames convertida.
+
+Estas funções foram criadas de modo a não ter-se que repetir o mesmo código constantemente nas várias células que precisam de fazer uso delas.
+<center><h2><b>Estimação de imagem de fundo</b></h2></center>
+
+A estimação de uma imagem de fundo limpa é muito importante para sistemas como este de videovigilancia com camara fixa. Para detetar objetos em movimento em um situação em que o fundo é constante a estratégia mais usada é a de Subtração do Fundo. Mas para fazermos isso é necessário termos um modelo de referencia do cenário vazio, que neste caso é só a estrada. 
+
+Tendo em conta que não nos é fornecido uma imgem da estrada sem nenhum carro, então temos que estimar a imagem temporalmente. Para isso usamos uma filtragem temporal com filtro de mediana.
+
+Se calcularmos a mediana de cada fixel ao longo de todos os frames, então conseguimos remover os objetos que passam rapidamente. Isto porque em média cada pixel passa mais tempo a mostrar "o fundo" do que a mostrar o carros.
+Na estimação de imagem de fundo, decidimos percorrer os frames todos sendo que o vídeo em análise não é muito grande, mas para vídeos de maior dimensão teríamos de optar por outra estratégia de modo a não compremeter o custo computacional da máquina que correrá o código. Opções possíveis seriam:
+Percorrer os frames do vídeo de passo em passo (ex: 2 em 2, 5 em 5, etc) ou selecionar aleatoriamente um conjunto de frames do vídeo.
+
+**Resultado Obtido** : A imagem que resulta apresenta só a autoestrada sem qualquer veiculo. Este é o resultado que estavamos à espera porque em qualquer posição (x,y) da imagem, a presença do carro é temporalmente curto quando comparamos com o tempo em que se vê a autoestrada. Podemos concluir que o filtro de mediana elimina bem os elementos atipicos temporalmente.
+<center><h2><b>Deteção de Pixeis Ativos</b></h2></center>
+<center>
+<img src="Formula da diferença absoluta.png"
+</center>
+
+
+Para realizar a deteção de pixeis ativos, decidimos basear-nos na diferença absoluta entre o frame atual e a imagem de fundo  presente nos slides (Capítulo 7) lecionados pelo professor. Primeiramente convertemos a imagem de fundo anteriormente estimada para a escala de cinzentos bem como todos os frames do vídeo. De seguida, convertemos tanto a imagem de fundo como os frames para float de modo a permitir números negativos corretamente na subtração. Posteriormente, aplicamos a fórmula da diferença absoluta. Por fim, aplicamos o limiar para determinar quais os pixeis que são considerados ativos (valores acima do limiar) e quais os que não são (valores abaixo do limiar).
+Quanto ao valor do limiar que decidimos utlizar, é de boa prática não usar um valor extraído por tentativa e erro, mas sim um valor calculado com base nos dados do vídeo. Para isso, baseamo-nos na estatística da imagem de fundo, mais especificamente no desvio padrão dos valores dos pixeis da imagem de fundo. Assim teremos uma noção da complexidade ou contraste natural da autoestrada presente no video. Usaremos 50% do desvio padrão como limiar pois o desvio padrão total inclui o alto contraste das linhas brnacas presentes no video, o ruído que queremos filtrar é tipicamente inferior a metade dessa variação global. Portanto, o limiar a utilizar é adaptativo em relação ao conteúdo do vídeo, o que é mais robusto do que um valor fixo arbitrário.
+
+Este limiar é definido dinamicamente dentro da função permitindo assim que o limiar se adapte e seja diferente para diferentes vídeos.
+
+**Resultado Obtido** : O output desta fase é uma sequencia de imagens binárias onde os veiculos aparecem como aglomerados de pixeis brancos e o fundo a preto. No entanto temos algum problemas, nomeadamente a presença de vários pontinhos brancos dispersos. Podemos assumir que este ruido deve acontecer devido a pequenas variações de iluminação, vibrações da câmara ou movimentos de elementos que são "estáticos" como as arvores ao fundo.
+
+Estes artefactos tem que ser filtrados posteriormente para evitarmos que tambem sejam classificados como veiculos.
+<center><h2><b>Operadores Morfológicos</b></h2></center>
+Após a deteção de pixeis ativos, podemos observar algum ruído no conjunto de imagens binárias obtidas (vídeo) como por exemplo, pequenos pontos que correspondem às linhas a trajetado das vias onde os carros circulam e de algumas árvores presentes no vídeo que ao apresentarem pouco mas algum movimento no vídeo são detetadas também como pixeis ativos. Para mitigar este ruido de forma a que no futuro não seja classificado , e apenas sim os veículos, precisamos de aplicar alguns operadores morfológicos.
+A estratégia que nós adotamos envolveu o uso de dois passos de aplicação de operadores morfologicos diferentes com elementos estruturantes diferentes:
+
+**OPEN** :
+- A operação consiste em uma erosão seguida de uma dilatação
+- Utilizamos como elemento estruturante um circulo pequeno (Elipse 3x3) - Mais adequado para os pontinhos pequenos
+- Como objetivo desta aplicação queremos remover os pixeis isolados a branco (pontinhos) de ruido que foram gerados no passo anterior com a erosão e a dilatação vai servir para recuperar a forma como os carros foram afetados por essa erosão. Abaixo temos uma imagem que exemplefica a utilização deste operador.
+
+  ![OPENexample.png](OPENexample.png)
+
+**CLOSE** :
+- A operação consiste em uma dilatação seguida de uma Erosão
+- Utilizamos como elemento estruturante um quadrado maior 8x8 (Rect 8x8) - Adequado tendo em conta o formato rectangular dos veiculos.
+- Como objetivo desta aplicação queremos tentar preencher os buracos que estão dentro das regiões dos veiculos e também tentar juntar os carros que se fragmentaram para depois ser mais facil de fazer a sua detecção. Abaixo temos uma imagem que exemplefica a utilização deste operador.
+
+  ![CLOSEexample.png](CLOSEexample.png)
+  
+**Resultado Obtido** : Após aplicarmos os operadores necessários, podemos ver que no vídeo resultante, o ruído foi reduzido significativamente, mantendo apenas assim os pixeis ativos que queremos classificar (veículos). Podemos visualizar regiões brancas e compactas que correspondem aos veiculos. Um efeito secundário que obtivemos e que é bastante notavel é que devido à perspetiva, os veiculos muito distantes e proximos uns dos outros acabam por se fundir em uma unica região conexa na operação de CLOSE. No entanto tendo em conta o proximo passo da definição da Região de Interesse em que os carros estão mais proximos da câmara e separados, esse efeito acaba por ser irrelevante.
+<center><h2><b>Deteção de Regiões Ativas</b></h2></center>
+A nossa ideia foi criar uma região de interesse (ROI) que abranja todas as vias da autoestrada, de modo a que apenas os veículos que passem por essa região sejam posteriormente contabilizados. Definimos os valores de cada um dos 4 pontos do trapézio "à mão" com base nas proporções da estrada no vídeo. Tentamos nos aproximar o maximo possivel dos exemplos visuais presentes no enunciado. Este passo é importante para evitar processar veiculos que passem na faxa de rodagem oposta, ruido que tenha sobrado e veiculos distantes que estão menos segmentados.
+Podemos observar um output com o vídeo orginal com a região de interesse desenhada a verde.
+Com a região de interesse definida corretamente, podemos agora avançar para a fase de detetar as regiões ativas (veículos) que passam por essa região criada anteriormente.
+Nesta fase fizemos a etiquetagem de componentes conectos em que o objetivo é agrupar os pixeis ativos vizinhos em objetos distintos.
+
+Para extrairmos os componentes conexos dos pixeis ativos, decidimos utilizar a função **cv2.findContours** da biblioteca OpenCV. Esta função é eficiente e amplamente utilizada para detetar contornos de componentes conexos em imagens binárias. 
+
+Como parametro do findContours utilizamos:
+ - **cv2.RETR_EXTERNAL**: Este parametro é importante na nossa implementação pois ele recupera os contornos externos e ignora os buracos dentro dos veiculos, buracos estes que são possiveis observar em alguns momentos depois da aplicaçãos dos operadores.
+ - **cv2.CHAIN_APPROX_SIMPLE**: Este é um parametro que é obrigatório preencher do findContours, esta opção faz com que apenas seja guardado pontos essenciais, desta forma optimiza o uso de memória.
+
+Ao aplicar esta função às imagens processadas (após a aplicação dos operadores morfológicos), conseguimos identificar as diferentes regiões ativas que correspondem aos veículos presentes na região de interesse.
+
+Para cada contorno que detetamos, calculamos a sua bounding box / caixa envolvente e o seu respectivo centroide(ponto central da caixa).
+
+Usamos os centroides das bounding boxes calculadas para representar a posição dos veículos em cada frame de modo a poder observar os contornos ao longo de toda a extensão da região de interesse. Recorremos à função **cv2.pointPolygonTest** para verificar se o centroide de cada caixa/boundingbox se encontra dentro da região de interesse. Se o centroide estiver dentro da região ou na sua borda. Se esta condição verificar-se desenhamos o contorno no frame atual. Esta verificação é feita para cada frame do vídeo. Se não usassemos esta verificação, outros veiculos da faixa de rodagem oposta e tambem as junções de veiculos (quando está muito longe da camara) verificadas no passo anterior seriam detetadas ou até mesmo pontos de ruído que não tenham sido totalmente elinados pelos operadores morfológicos aplicados anteriormente.
+Quando os veículos se ausentam da região de interesse, os contornos deixam de ser desenhados. Todos os veículos que circulem fora da regiáo de interesse são totalmente ignorados para efeitos de contagem. 
+**Resultado Obtido** : Podemos ver que as Bounding Boxes desenhadas acompanham corretamente os veiculos  apenas dentro dos limites da região de interesse. Para efeitos de teste e nitidez do ambiente envolvente, usamos o video original como base para desenhar os contornos dos veículos detetados, como fizemos anteriormente com a região de interesse. 
+
+No entanto verificamos que por breves momentos quando os veiculos estão a sair da nossa região de interesse pode acontecer uma intermitência em que visualmente as caixas "piscam". Isto acontece porque o centroide oscila momentaneamente para dentro e para fora da ROI, seja por causa do redimensionamento da caixa ou do seu posicionamento, isto faz com que a caixa desaparça e reapareça em frames seguidos. Logo este é um problema que temos que resolver no passo seguinte para termos um bom rastreamento dos veiculos.
+
+De seguida passamos à fase da contagem dos veículos.
+<center><h2><b>Correspondência de regiões entre Imagens Consecutivas</b></h2></center>
+Após termos realizado a deteção de regiões ativas, o próximo passo é estabelecer a correspondência entre essas regiões em imagens consecutivas. Para isso, decidimos que usar um método baseado na distância entre as boundingboxes das regiões ativas em frames consecutivos seria uma boa ideia para conseguir distinguir cada veículo. Isto porque a contagem de veiculos temos que saber que o objeto A no frame t é o mesmo objeto A no frame t+1.
+O nosso algoritmo implementado neste paso é baseado na distancia espacial e memoria temporal:
+
+ - Correspondencia de veiculos através da Distancia Euclidiana:
+   
+Para isto partimos do pressuposto que quando a taxa de frames é alta que chegue, o deslocamento de um veiculo entre frames é pequeno.
+
+Calculamos a distancia Euclideana entre a posição de um veiculo (canto superior esquerdo da boundingbox - utilizamos esta posição apenas por conveniencia, não havia necessidade de voltar a calcular o centroide) no frame atual com a posição dos veiculos registrados no frame anterior. Usamos a distancia Euclideana porque esta é uma métrica comummente usada para medir a distância entre dois pontos num espaço bidimensional, calculamos através da função **math.dist** que já tinhamos prática na sua utilização.
+
+Se a distancia calculada for inferior a **MAX_DIST_ENTRE_BBOXES** (constante esta que foi definida como 25 pixeis pois esta é uma distancia curta que chegue para não assumir um carro que esteja na via do lado ou atrás/frente como o mesmo) então assumimos que é o mesmo veiculo e mantemos o seu ID.
+
+- Gestão das falhas de persistência:
+
+Para resolvermos o problema falado no passo anterior de intermitencia quando os veiculos saem da ROI, decidimos implementar um sistema de  time to live.
+
+Em suma, quando um veiculo com ID já atribuido deixa de ser detetado, não o eliminamos logo, em vez disso movemos o para uma lista de veiculos que acabaram de "desaparecer". 
+Se um veiculo novo for detetado dentro de um espaço de 30 frames (**FRAMES_PRESISTENCIA** - tempo curto de time to live que chegue para não assumir o proximo carro a sair na mesma via como um que acabou de sair) depois de um veiculo "desaparecer" e estiver muito perto da ultima zona em que esse carro desaparecido saiu da ROI então sabemos que é o mesmo. Isto funciona porque os novos carro que são detetados estão muito mais perto da cârama do que os carros que acabaram de sair.
+
+
+- Ordenação Inicial
+  
+Ao longo do desenvolvimento da função notamos que inicialmente, o carro que está à frente estava a ser identificado como V4 e os que estavam atrás como V1,V2 e V3. Para corrigir isto, tivemos a necessidade de no primeiro frame, ordenadar os carros de forma correta pois o resultado que queremos, e que faz mais sentido, é que o carro mais à frente na zona da região de interesse tenha sido o primeiro a entrar na mesma portanto queremos que este seja o veículo 1 (V1) e depois assim sucessivamente para os restantes carros presentes no frame 0. Esta ordenação é feita com base na coordenada y de cada veículo, ordenando do menor para o maior valor de y (de cima para baixo na imagem).
+**Resultado Final** : O algoritmo que desenvolvemos podemos observar que consegue seguir os veiculos ao longo da nossa Região de Interesse e mantem os IDs de cada veiculo estáveis o que permite uma boa contagem dos veiculos no fluxo de tráfego.
+# OBJETIVO OPCIONAL - Estimar a velocidade dos veículos e a velocidade média em cada via da autoestrada
+<center><h2><b>Contextualização do Objetivo Opcional</b></h2></center>
+Um dos desafios em sistemas de visão  aplicados ao tráfego é a extração de métricas como velocidade e distância a partir de imagens 2D. 
+
+O problema é a Projeção de Perspetiva, onde a escala da imagem varia com a profundidade, ou seja, um objeto distante ocupa menos pixéis do que um objeto próximo, mesmo que percorra a mesma distância. Para resolver este problema e calcular a velocidade real em km/h dos veículos, e também a velocidade média por via, implementámos uma transformação geométrica (Homografia) de modo a obter uma vista de topo. 
+Com base em informações do IMT sabemos que a largura de cada via numa autoestrasa é de 3,75 metros, como podemos ver na imagem abaixo:
+
+![CaracteristicasAutoestrada.jpg](CaracteristicasAutoestrada.jpg)
+
+
+Com base em informações retiradas do Manual de Sinalização e Planeamento das Acessibilidades e da Gestão Viária sabemos também que o tamanho de um traço descontinuo é de 4 metros e com 10 metros de separação entre eles.
+
+![InformacoesLinhasLongitudinais.jpg](InformacoesLinhasLongitudinais.jpg)
+
+# Pressupostos assumidos
+Assumimos que a câmara está alinhada com o eixo da estrada. Desta forma, a distorção da perspetiva é basicamente apenas longitudinal, em que por estarmos a ver a estrada de frente, a sua altura é bem menor do que se a estivessemos a ver por cima. Por esta razão, mantemos a largura da imagem transformada igual à largura da região de interesse na imagem original. Se a câmara estivesse rodada mais para a esquerda ou para a direita, teríamos que ajustar a largura da imagem transformada para refletir a distorção lateral. Abaixo tem uma imagem que gerámos com uma ferramente de IA (Nano Banana) para exemplificar esta distorção na altura que temos:
+
+<img src="EsquemaVisaoEstrada.png" alt="Esquema de Distorção de Perspetiva" width="800">
+
+Segundo a célula anterior, sabemos que o tamanho real da largura de uma via da autoestrada é de 3.75 metros, dos traços longitudinais descontínuos 4 metros e do espaço entre eles 10 metros. Assim, ao contarmos o número de espaços entre os traços na região de interesse, podemos determinar, no plano visto de cima, quantas vezes maior é a altura da região de interesse comparada com a largura das 3 vias. Com isto, conseguimos estabelecer uma relação de escala entre os pixeis na imagem e as distâncias reais em metros, mantendo assim uma boa proporção. 
+<center><h2><b>Calibração e Parâmetros Reais</b></h2></center>
+De seguida, precisamos de calcular os parâmetros reais do sistema de projeção de modo a conseguirmos fazer a transformação de perspetiva corretamente. Para isso, usamos como **src_points** os 4 pontos que definem a nossa região de interesse no vídeo original.
+
+Manuseamos estes pontos para calcular a largura totalem pixeis da região de interesse na imagem original (**LARGURA_PERSPETIVA**) pois esta será igual à largura da imagem transformada como já referido anteriormente.
+
+Sabemos que a largura real em metros da região de interesse é igual a 3 vezes (3 vias) a largura de uma via (3.75 metros). A altura real em metros é calculada com base no número de traços e no número de espaços existentes entre eles na região de interesse. Observando visualmente a região de interesse, podemos contar que existem aproximadamente 3 traços e 3.5 espaços entre eles.
+
+Assim, sabendo a altura e largura real em metros, podemos calcular a porporção que poderemos aplicar à imagem transformada de modo a evitar distorções dos veículos na estrada.
+
+Sabendo a **LARGURA_PERSPETIVA** e a **ALTURA_PERSPETIVA**, podemos definir os **dst_points** que serão os pontos que definem o retângulo que representará a vista de topo das imagens transformadas.
+
+Sem este tratamento de dados, caso atribuíssemos valores arbitrários para a largura e altura das imagens transformadas, a escala entre os eixos X e Y não seria a mais consistente, o que levaria a medições não tão precisas de distância e velocidade.
+
+<center><h2><b>Transformação de Perspetiva (Homografia)</b></h2></center>
+Com os pontos de origem (**src_points**) e destino (**dst_points**) definidos, podemos calcular a **matriz_homografia** , para isso exploramos a função `cv2.getPerspectiveTransform` da biblioteca OpenCV. 
+
+Com a matriz de homografia calculada, aplicamos dentro da função **aplicar_perspetiva_video** a transformação H a cada frame do vídeo original, que percorrido dentro de um ciclo for, aplica esta matriz a todos os frames do vídeo original com o uso de outra função do OpenCV, a`cv2.warpPerspective`.
+
+Esta aplicação da perspetiva é feita segundo a matriz de homografia calculada, sobre o vídeo original com determinado tamanho de saída (**LARGURA_PERSPETIVA** x **ALTURA_PERSPETIVA**)
+
+É de notar que a transformação só é válida para o plano mesmo da estrada em que Z=0. Objetos com altura (como os carros) sofrem uma distorção, em que parecem "deitados" ou achatados.
+<center><h2><b>Configuração das Vias e FPS</b></h2></center>
+Uma vez obtida a vista de topo, a segmentação das vias torna-se muito simples, pois as linhas descontinuas divisórias agora estão verticais e equidistantes. Logo, dividimos a largura das imagens por 3 secções iguais para definir os limites das vias: 
+- limite_v1 - limite entre a via da esquerda e a do meio
+- limite_v2 - limite entre a via do meio e a que está mais à direita.
+
+A função **obter_via** recebe a coordenada x onde o veículo se encontra no frame atual e devolve a via em que este se encontra (1 (esquerda), 2 (meio) ou 3(direita)).
+Adicionalmente, para o cálculo da velocidade ($v = \Delta d / \Delta t$), é importante sabermos o intervalo de tempo exato entre frames com o numero real de frames por segundo. Utilizamos `cap.get(cv2.CAP_PROP_FPS)` para extrair o Frame Rate real do ficheiro de vídeo, o que até ao momento ainda não tinhamos realizado. Assim garantimos a precisão temporal. Se fossemos nós a decidir um frame rate, então as velocidades medidas não seriam as reais, já que bastaria aumentar o frame rate (acelerar o video) para as velocidades serem maiores
+<center><h2><b>Algoritmo de Cálculo de Velocidades</b></h2></center>
+A função **processar_velocidades** integra todo o conhecimento geométrico e físico adquirido. O processo para cada veículo em cada frame é o seguinte:
+
+- Ponto de Contacto: Selecionamos o ponto $(x, y+h)$ da bounding box original. Este corresponde mais ou menos a um peneu (canto inferior esquerdo) que está realmente em contacto com a estrada, assim garante que o ponto está no plano Z=0 para a sua projeção homografica funcionar mais precisamente. O centro da caixa ou o topo não servem tão bem, pois a sua projeção não iria ser tão precisa porque estes pontos não estão em contacto com o chão.
+
+- Transformação: Aplicamos **cv2.perspectiveTransform** apenas a este ponto de contacto, e obtemos as suas coordenadas $(x_t, y_t)$ na vista de topo.
+
+- Identificação da Via: Com base na coordenada $x_t$, classificamos o veículo na via correspondente.
+
+- Cálculo da Velocidade: Como calcular a velocidade instantânea entre frames consecutivos ($t$ e $t-1$) introduz ruído devido à pequena "vibração" da boundingbox então implementámos uma média de velocidade para saber a velocidadede "instantânea". Calculamos a distância percorrida entre o frame atual e o frame de há 5 instantes atrás (GAP_FRAMES = 5).A distância Euclidiana em píxeis (dist_pixeis) é convertida para metros (dividir pelos pixeis por metro previamente calculados) e a velocidade é obtida pela fórmula clássica $v = \frac{\Delta d}{\Delta t}$.
+**Resultado Obtido:** Os resultados apresentam-se consistentes com o esperado para um cenário de autoestrada. As velocidades médias situam-se no intervalo típico (50 km/h a 120 km/h) valores limite de circulação dentro de uma autoestrada em Portugal. 
+
+Observa-se que a via mais à esquerda (Via 1), tipicamente usada para realizar ultrapassagens, tem uma velocidade média superior às vias mais à direita, o que valida assim a lógica do sistema de contagem de velocidades implementado.
+<center><h2><b> Conclusão </b></h2></center>
+Neste trabalho, desenvolvemos um algoritmo capaz de detetar e contar veículos no vídeo de teste que foi fornecido pelo docente. Utilizamos técnicas de Análise de Movimento e Segmentação de imagens para alcançar este objetivo (recurso às funções da biblioteca OpenCV).
+
+Tendo em conta que tentamos implementar opcionalmente a velocidade de cada veículo e consequentemente a média das velocidades em cada via, sentimos que nesta parte do trabalho houve algumas dificuldades, nomeadamente na calibração da perspetiva da região de interesse. 
+Sentimos também algumas dificuldades na parte da correspondência entre imagens consecutivas, especialmente na gestão de veículos que desapareciam temporariamente da região de interesse bem como as suas reidentificações.
+
+Contudo, acreditamos que o trabalho desenvolvido cumpre os objetivos propostos e demonstra a nossa tentativa de uma boa prática das técnicas lecionadas bem como das funções da biblioteca do OpenCV.
+<center><h2><b> Bibliografia </b></h2></center>
+Jorge, Pedro, Documentação da unidade curricular 2025-2026, Lisboa: ISEL, 2025  
+
+https://docs.opencv.org/4.x/ - Documentação oficial da biblioteca OpenCV
+
+https://numpy.org/doc/ - Documentação oficial da biblioteca NumPy
+
+https://www.ccdr-n.pt/storage/app/media/2025/Mobilidade/12SinRodoviaria.pdf - Manual de Planeamento das Acessibilidades e da Gestão Viária
+
+https://www.imt-ip.pt/wp-content/uploads/IMTT/Portugues/InfraestruturasRodoviarias/InovacaoNormalizacao/Divulgao%20Tcnica/AutoEstradasCaracteristicasTecnicas.pdf - Características Técnicas das Autoestradas em Portugal
+
+https://www.geeksforgeeks.org/ - Geeks for Geeks
+
+https://artlist.io/image-to-image-ai/nano-banana - Nano Banana, Ferramenta de IA para geração de imagens
