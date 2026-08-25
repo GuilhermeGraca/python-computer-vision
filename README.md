@@ -62,9 +62,11 @@ https://github.com/user-attachments/assets/b52ed7ae-9a13-4e3b-82bd-84e15ec48b6d
   <em>Final output of the Traffic Flow system: Vehicles are tracked continuously within a specific region of interest, and their real-time speeds (km/h) are calculated across three highway lanes.</em>
   <br/><br/><br/>
   
-  <img src="preview/LCoutputFinal.png" alt="Lego Final Output" width="80%">
+https://github.com/user-attachments/assets/fe6c6998-50d3-478d-a962-9d0fa25bd214
+
+
   <br/>
-  <em>Final output of the Lego Sorting system: Scattered Lego bricks are successfully extracted from the background, their shapes classified by dimensions, and colored contours are drawn based on piece type.</em>
+  <em>Video demonstration of the piece extraction and geometric classification stages.</em>
 </div>
 <br />
 
@@ -147,11 +149,9 @@ This system processes a live highway video feed to accurately monitor traffic. T
 <div align="center">
 
 
-https://github.com/user-attachments/assets/fe6c6998-50d3-478d-a962-9d0fa25bd214
-
-
+  <img src="preview/LCoutputFinal.png" alt="Lego Final Output" width="80%">
   <br/>
-  <em>Video demonstration of the piece extraction and geometric classification stages.</em>
+  <em>Final output of the Lego Sorting system: Scattered Lego bricks are successfully extracted from the background, their shapes classified by dimensions, and colored contours are drawn based on piece type.</em>
 </div>
 <br/>
 
