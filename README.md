@@ -199,7 +199,7 @@ Follow these instructions to set up a local copy of the project on your machine.
    ```
 3. **Install the required libraries**:
    ```sh
-   pip install opencv-python numpy matplotlib
+   pip install -r requirements.txt
    ```
 4. **Run the notebooks**:
    ```sh
