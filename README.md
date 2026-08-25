@@ -53,7 +53,11 @@
 ## About The Project
 
 <div align="center">
-  <video src="preview/TVCOutputFinal.mp4" width="80%" controls></video>
+
+
+https://github.com/user-attachments/assets/b52ed7ae-9a13-4e3b-82bd-84e15ec48b6d
+
+
   <br/>
   <em>Final output of the Traffic Flow system: Vehicles are tracked continuously within a specific region of interest, and their real-time speeds (km/h) are calculated across three highway lanes.</em>
   <br/><br/><br/>
@@ -102,7 +106,11 @@ The primary goal of this project is to apply core computer vision algorithms wit
 ### 1. Traffic Vehicle Counting & Speed Estimation
 
 <div align="center">
-  <video src="preview/TVCOutputStages.mp4" width="80%" controls></video>
+
+
+https://github.com/user-attachments/assets/4b0f272b-6513-45b8-a78f-3f3315589942
+
+
   <br/>
   <em>A full run-through of the pipeline, displaying each internal stage of processing side-by-side.</em>
 </div>
@@ -137,7 +145,11 @@ This system processes a live highway video feed to accurately monitor traffic. T
 ### 2. Lego Piece Classification
 
 <div align="center">
-  <video src="preview/LCoutputstagesprocess.mp4" width="80%" controls></video>
+
+
+https://github.com/user-attachments/assets/fe6c6998-50d3-478d-a962-9d0fa25bd214
+
+
   <br/>
   <em>Video demonstration of the piece extraction and geometric classification stages.</em>
 </div>
