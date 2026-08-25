@@ -70,7 +70,7 @@ https://github.com/user-attachments/assets/fe6c6998-50d3-478d-a962-9d0fa25bd214
 </div>
 <br />
 
-This repository contains **Traffic Flow & Lego Sorting Vision Systems**, an academic project developed from scratch for the *Image Processing and Vision* course at **ISEL (Instituto Superior de Engenharia de Lisboa)** in 2025. 
+This repository contains **Traffic Flow & Lego Sorting Vision Systems**, an academic project developed from scratch in collaboration with **Martim Ramos** for the *Image Processing and Vision* course at **ISEL (Instituto Superior de Engenharia de Lisboa)** in 2025. 
 
 The primary goal of this project is to apply core computer vision algorithms without relying on deep learning models. It solves two distinct problems: counting and tracking vehicles on a highway, and classifying Lego pieces based on their geometric properties. 
 
