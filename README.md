@@ -4,7 +4,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/GuilhermeGraca/python-computer-vision">
-    <img src="preview/logo.jpg" alt="Project Logo" width="100" height="100" style="border-radius: 24px; object-fit: cover;">
+    <img src="preview/logo.png" alt="Project Logo" width="100" height="100">
   </a>
 
   <h3 align="center">Traffic Flow & Lego Sorting Vision Systems</h3>
